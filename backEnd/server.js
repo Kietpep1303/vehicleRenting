@@ -2,21 +2,46 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 
-const connectMongoDB = require('./database/mongodb');
-const authenticationRoute = require('./routes/authenticationRoute');
-const storeVehicleRoute = require('./routes/vehicle');
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST'],
+    },
+});
+
+io.on('connection', (socket) => {
+    socket.on('registerEmail', (email) => {
+      connectedUsers[email] = socket.id;
+    });
+  
+    socket.on('privateMessage', ({ senderEmail, recipientEmail, message }) => {
+      const recipientSocket = connectedUsers[recipientEmail];
+      if (recipientSocket) {
+        io.to(recipientSocket).emit('privateMessage', { senderEmail, message });
+      }
+    });
+});
+
+const pool = require('./database/postgresql');
+
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors()); // Support for multiple ports application.
 app.use(express.json());
-app.use('/api/auth', authenticationRoute);
-app.use('/api/vehicle', storeVehicleRoute);
+app.use('/api/auth', require('./routes/authenticationRoute'));
+app.use('/api/vehicle', require('./routes/vehicleRoute'));
+app.use('/api/rental', require('./routes/rentalRoute'));
 
-connectMongoDB();
+pool.connect(
+    console.log('Connected to PostgreSQL database')
+);
 
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-});
+  });
