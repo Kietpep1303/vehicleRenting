@@ -1,8 +1,0 @@
-
-{
-    "email": "1@example.com",
-    "firstName": "Dang",
-    "middleName": "Tan",
-    "lastName": "Kiet",
-    "idCardNumber": "123123123123"
-}
