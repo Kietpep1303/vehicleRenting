@@ -7,6 +7,9 @@ import { ErrorCodes } from './errorCodes';
 @Catch()
 export class SocketExceptionFilter implements ExceptionFilter {
     catch(exception: unknown, host: ArgumentsHost) {
+        
+        console.error('[SocketExceptionFilter] caught exception:', exception);
+
         const context = host.switchToWs();
         const client = context.getClient<Socket>();
 

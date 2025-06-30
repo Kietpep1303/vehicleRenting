@@ -74,7 +74,7 @@ export class GetRentalInfoController {
     ) {
         try {
             // Get all rentals of the user.
-            const rentals = await this.getRentalInfoService.getAllRenterRentals(req.user.id, page, limit);
+            const rentals = await this.getRentalInfoService.getAllRenterRentals(req.user.userId, page, limit);
 
             // Return the rentals.
             return { status: HttpStatus.OK, message: 'All renter rentals fetched successfully.', data: rentals };
@@ -128,7 +128,7 @@ export class GetRentalInfoController {
             if (!Object.values(RentalStatus).includes(status)) throw new ErrorHandler(ErrorCodes.INVALID_RENTAL_STATUS, 'Invalid rental status', HttpStatus.BAD_REQUEST);
 
             // Get all current status rentals of the user.
-            const rentals = await this.getRentalInfoService.getAllCurrentStatusRentals(req.user.id, status, page, limit);
+            const rentals = await this.getRentalInfoService.getAllCurrentStatusRentals(req.user.userId, status, page, limit);
 
             // Return the rentals.
             return { status: HttpStatus.OK, message: 'All current status rentals fetched successfully.', data: rentals };
@@ -187,7 +187,7 @@ export class GetRentalInfoController {
             if (!Object.values(RentalStatus).includes(status)) throw new ErrorHandler(ErrorCodes.INVALID_RENTAL_STATUS, 'Invalid rental status', HttpStatus.BAD_REQUEST);
 
             // Get all the owner's vehicles that owner pending.
-            const rentals = await this.getRentalInfoService.getAllOwnerStatusRentals(req.user.id, status, page, limit);
+            const rentals = await this.getRentalInfoService.getAllOwnerStatusRentals(req.user.userId, status, page, limit);
 
             // Return the rentals.
             return { status: HttpStatus.OK, message: 'All owner pending vehicles fetched successfully.', data: rentals };

@@ -37,7 +37,7 @@ export class AuthService {
     
     // Login user to get both access and refresh tokens.
     async login(userId: number, email: string, accountLevel: number, deviceName: string) {
-        
+
         // Make an unique device id.
         const deviceId = `[DEVICE]${uuidv7()}`;
 
@@ -61,6 +61,18 @@ export class AuthService {
             expiresAt: generateDate(30 * 24 * 60) // 30 days.
         });
         return { accessToken, refreshToken, deviceId, deviceName };
+    }
+
+    // Get the permanent access token.
+    async getPermanentAccessToken(userId: number) {
+        if (userId === 0) {
+            const payload = { userId, accountLevel: 3 };
+            return this.jwtService.sign(payload, {
+                secret: this.configService.get('JWT_SECRET'),
+                expiresIn: '99y'
+            });
+        }
+        else return null;
     }
 
     // Get all Valid refresh tokens of one user.
@@ -132,5 +144,4 @@ export class AuthService {
         });
         return result;
     }
-
 }

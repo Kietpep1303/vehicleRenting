@@ -100,7 +100,7 @@ export class CreateEditGetRatingController {
             // Get the average rating of the vehicle.
             const avg = await this.createEditRatingService.getAverageRating(vehicleId);
 
-            if (avg === null) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_FOUND, 'No ratings found for this vehicle', HttpStatus.NOT_FOUND);
+            if (avg === null) return { status: HttpStatus.OK, message: 'Average rating fetched successfully.', data: 0 };
             
             return { status: HttpStatus.OK, message: 'Average rating fetched successfully.', data: avg };
         } catch (error) {

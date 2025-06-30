@@ -13,10 +13,10 @@ export class VehicleTotalRatingEntity {
     @JoinColumn({ name: 'vehicle_id' })
     vehicle: VehicleEntity;
 
-    @Column({ type: 'int' })
+    @Column({ name: 'total_rating', type: 'int' })
     totalRating: number;
 
-    @Column({ type: 'float' })
+    @Column({ name: 'average_rating', type: 'float' })
     averageRating: number;
 
     @CreateDateColumn({ name: 'created_at' })

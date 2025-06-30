@@ -82,12 +82,11 @@ export class AdminController {
             }
 
             // Approve OR reject a requested level 2 user.
-            const result = await this.adminService.approveOrRejectRequestedLevel2User(userId, status, rejectedReason);
-            if (result == null) {
-                throw new ErrorHandler(ErrorCodes.FAILED_TO_DECISION_REQUESTED_LEVEL_2_USER, 'Failed to decision requested level 2 user', HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            await this.adminService.approveOrRejectRequestedLevel2User(userId, status, rejectedReason);
+            
             return { status: HttpStatus.OK, message: 'Requested level 2 user decision made successfully.' };
         } catch (error) {
+            
             if (error instanceof ErrorHandler) throw error;
             console.log(error);
             throw new ErrorHandler(ErrorCodes.FAILED_TO_DECISION_REQUESTED_LEVEL_2_USER, 'Failed to decision requested level 2 user', HttpStatus.INTERNAL_SERVER_ERROR);

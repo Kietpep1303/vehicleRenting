@@ -108,6 +108,23 @@ export class AuthController {
         }
     }
 
+    // // Login AI.
+    // @Post('login-ai')
+    // @HttpCode(HttpStatus.OK)
+    // async loginAi() {
+    //     try {
+    //         // Login the user.
+    //         const token = await this.authService.getPermanentAccessToken(0);
+
+    //         // Return the token.
+    //         return { status: HttpStatus.OK, message: 'Login successful.', token };
+    //     } catch (error) {
+    //         if (error instanceof ErrorHandler) throw error;
+    //         console.log(error);
+    //         throw new ErrorHandler(ErrorCodes.FAILED_TO_LOGIN, 'Failed to login', HttpStatus.INTERNAL_SERVER_ERROR);
+    //     }
+    // }
+
     // Get all valid refresh tokens of a user.
     @UseGuards(AuthGuard('jwt'))
     @Get('refresh-tokens')

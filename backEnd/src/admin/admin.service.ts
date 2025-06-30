@@ -56,21 +56,13 @@ export class AdminService {
     // Approve OR reject a requested level 2 user.
     async approveOrRejectRequestedLevel2User(userId: number, status: boolean, rejectedReason?: string) {
         const payload = status ? { status: UserStatus.APPROVED, accountLevel: 2 } : { status: UserStatus.REJECTED, rejectedReason: rejectedReason };
-        const result = await this.userRepository.update( { id: userId, status: UserStatus.PENDING }, payload );
-
-        if (result.affected === 0) {
-           return null;
-        }
+        await this.userRepository.update( { id: userId, status: UserStatus.PENDING }, payload );
     }
 
     // Approve OR reject a requested vehicle.
     async approveOrRejectRequestedVehicle(vehicleId: number, status: boolean, rejectedReason?: string) {
         const payload = status ? { status: VehicleStatus.APPROVED } : { status: VehicleStatus.REJECTED, rejectedReason };
-        const result = await this.vehicleRepository.update(
-            { id: vehicleId, status: VehicleStatus.PENDING }, payload );
+        await this.vehicleRepository.update({ id: vehicleId, status: VehicleStatus.PENDING }, payload );
 
-        if (result.affected === 0) {
-            return null;
-        }
     }
 }

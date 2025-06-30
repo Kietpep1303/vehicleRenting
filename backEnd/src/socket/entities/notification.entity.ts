@@ -1,6 +1,6 @@
 // Imports TypeORM.
 import { UserEntity } from 'src/user/entities/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 
 @Entity('notification')
 export class NotificationEntity {
@@ -15,8 +15,11 @@ export class NotificationEntity {
     @JoinColumn({ name: 'user_id' })
     user: UserEntity;
 
-    @Column({ name: 'event', type: 'text' })
-    event: string;
+    @Column({ name: 'event', type: 'jsonb' })
+    event: {
+        message: string;
+        data: any;
+    };
 
     @Column({ name: 'created_at', type: 'timestamp' })
     createdAt: Date;

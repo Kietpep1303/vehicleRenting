@@ -74,6 +74,7 @@ export class UserController {
             // Return user public information.
             const { nickname, avatar } = user;
             return { status: HttpStatus.OK, message: 'User public information retrieved successfully.', data: {
+                id: user.id,
                 nickname: nickname,
                 avatar: avatar
             }};

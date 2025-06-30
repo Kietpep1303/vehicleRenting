@@ -30,7 +30,7 @@ import { RedisModule } from './redis/redis.module';
             envFilePath: '.env',
         }),
         BullModule.forRoot({
-            redis: { host: 'localhost', port: 6379 },
+            redis: { host: '127.0.0.1', port: 6379 },
           }),
         UserModule,
         CloudinaryModule,
