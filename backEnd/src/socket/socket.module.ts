@@ -41,13 +41,16 @@ import { ChatMessageEntity } from './entities/chatMessage.entity';
 // Imports cloudinary module.
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
+// Imports notification controller.
+import { NotificationController } from './controllers/notification.controller';
+
 @Module({
   imports: [
     forwardRef(() => AuthModule),
     TypeOrmModule.forFeature([NotificationEntity, ChatEntity, ChatUserEntity, ChatMessageEntity]),
     CloudinaryModule,
     HttpModule,
-    UserModule,
+    forwardRef(() => UserModule),
   ],
   providers: [
     NotificationService,
@@ -60,6 +63,7 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
   ],
   controllers: [
     GetMessageController,
+    NotificationController,
   ],
   exports: [
     NotificationService,

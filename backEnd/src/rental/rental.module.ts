@@ -55,7 +55,7 @@ import { AccountLevelGuard } from '../common/guards/accountLevel.guard';
         }),
         TypeOrmModule.forFeature([RentalEntity, ContractEntity]),
         forwardRef(() => VehicleModule),
-        UserModule,
+        forwardRef(() => UserModule),
         SocketModule,
         AuthModule
     ],

@@ -9,7 +9,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { AccountLevelGuard } from '../../common/guards/accountLevel.guard';
 import { RequiredAccountLevel } from '../../common/decorator/accountLevel.decorator';
 
-
 // Imports file interceptor.
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -173,6 +172,11 @@ export class UploadVehicleController {
             const vehicleInfo = await this.getVehicleService.getVehicleByIdPrivate(dto.vehicleId);
             if (!vehicleInfo) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_FOUND, 'Vehicle not found', HttpStatus.NOT_FOUND);
             if (vehicleInfo.userId !== req.user.userId) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_OWNER, 'User is not the owner of the vehicle', HttpStatus.FORBIDDEN);
+
+            // Check if the vehicle is suspended.
+            if (vehicleInfo.status === VehicleStatus.SUSPENDED) throw new ErrorHandler(ErrorCodes.VEHICLE_SUSPENDED, 'Vehicle is suspended', HttpStatus.BAD_REQUEST);
+            
+            // Check if the vehicle is approved.
             if (vehicleInfo.status !== VehicleStatus.APPROVED) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_APPROVED, 'Vehicle is not approved', HttpStatus.FORBIDDEN);
 
             // Validate the update vehicle info.

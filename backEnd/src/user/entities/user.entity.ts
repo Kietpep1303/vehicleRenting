@@ -1,14 +1,18 @@
 // Imports TypeORM.
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 
 // add UserStatus enum
 export enum UserStatus {
     NO_LEVEL_2 = 'X',
     PENDING = 'PENDING',
     APPROVED = 'APPROVED',
-    REJECTED = 'REJECTED'
+    REJECTED = 'REJECTED',
+    SUSPENDED = 'SUSPENDED'
 }
 
+@Index('IDX_USER_NICKNAME', ['nickname'])
+@Index('IDX_USER_ACCOUNT_LEVEL', ['accountLevel'])
+@Index('IDX_USER_STATUS', ['status'])
 @Entity('user')
 export class UserEntity {
     @PrimaryGeneratedColumn() 

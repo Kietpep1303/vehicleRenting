@@ -36,6 +36,9 @@ export class VehicleController {
             if (!vehicle) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_FOUND, 'Vehicle not found', HttpStatus.NOT_FOUND);
             if (vehicle.userId !== req.user.userId) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_OWNER, 'User is not the owner of the vehicle', HttpStatus.FORBIDDEN);
 
+            // Check if the vehicle is suspended.
+            if (vehicle.status === VehicleStatus.SUSPENDED) throw new ErrorHandler(ErrorCodes.VEHICLE_SUSPENDED, 'Vehicle is suspended', HttpStatus.BAD_REQUEST);
+            
             // Delete the vehicle.
             await this.createUpdateDeleteVehicleService.deleteVehicle(vehicleId);
             return { status: HttpStatus.OK, message: 'Vehicle deleted successfully.' };
@@ -59,6 +62,9 @@ export class VehicleController {
             const vehicle = await this.getVehicleService.getVehicleByIdPrivate(vehicleId);
             if (!vehicle) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_FOUND, 'Vehicle not found', HttpStatus.NOT_FOUND);
             if (vehicle.userId !== req.user.userId) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_OWNER, 'User is not the owner of the vehicle', HttpStatus.FORBIDDEN);
+
+            // Check if the vehicle is suspended.
+            if (vehicle.status === VehicleStatus.SUSPENDED) throw new ErrorHandler(ErrorCodes.VEHICLE_SUSPENDED, 'Vehicle is suspended', HttpStatus.BAD_REQUEST);
 
             // Check if the vehicle is already hidden.
             if (vehicle.status === VehicleStatus.HIDDEN) throw new ErrorHandler(ErrorCodes.VEHICLE_ALREADY_HIDDEN, 'Vehicle is already hidden', HttpStatus.BAD_REQUEST);
@@ -90,6 +96,9 @@ export class VehicleController {
             if (!vehicle) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_FOUND, 'Vehicle not found', HttpStatus.NOT_FOUND);
             if (vehicle.userId !== req.user.userId) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_OWNER, 'User is not the owner of the vehicle', HttpStatus.FORBIDDEN);
 
+            // Check if the vehicle is suspended.
+            if (vehicle.status === VehicleStatus.SUSPENDED) throw new ErrorHandler(ErrorCodes.VEHICLE_SUSPENDED, 'Vehicle is suspended', HttpStatus.BAD_REQUEST);
+            
             // Check if the vehicle is already unhidden.
             if (vehicle.status !== VehicleStatus.HIDDEN) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_HIDDEN, 'Vehicle is not hidden', HttpStatus.BAD_REQUEST);
 

@@ -22,11 +22,19 @@ export class AdminService {
         const skip = (page - 1) * limit;
         const [users, total] = await this.userRepository.findAndCount({
             where: { accountLevel: 1, status: UserStatus.PENDING  },
+            order: { createdAt: 'DESC' },
             skip,
             take: limit,
         });
         return { 
-            users,
+            users: users.map(user => ({
+                id: user.id,
+                avatar: user.avatar,
+                nickname: user.nickname,
+                email: user.email,
+                status: user.status,
+                createdAt: user.createdAt,
+            })),
             total,
             currentPage: page,
             totalPages: Math.ceil(total / limit),
@@ -44,7 +52,14 @@ export class AdminService {
             take: limit,
         });
         return { 
-            vehicles,
+            vehicles: vehicles.map(vehicle => ({
+                id: vehicle.id,
+                title: vehicle.title,
+                imageFront: vehicle.imageFront,
+                vehicleRegistrationId: vehicle.vehicleRegistrationId,
+                status: vehicle.status,
+                createdAt: vehicle.createdAt,
+            })),
             total,
             currentPage: page,
             totalPages: Math.ceil(total / limit),

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 // Imports bcrypt.
 import * as bcrypt from 'bcrypt';
@@ -22,11 +22,15 @@ import { UpdateUserInfoDto } from '../dto/update-user-info.dto';
 // Imports standard date.
 import { generateDate } from '../../common/utils/standardDate.util';
 
+// Imports admin gateway.
+import { AdminGateway } from '../../admin/admin.gateway';
+
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
         private readonly cloudinaryService: CloudinaryService,
+        @Inject(forwardRef(() => AdminGateway)) private readonly adminGateway: AdminGateway,
     ) {}
     
     // Create user to level 0.
@@ -74,7 +78,7 @@ export class UserService {
             if (fileArray && fileArray.length) {
                 return this.cloudinaryService
                     .uploadImage(fileArray[0], 'user')
-                    .then(uploaded => { dto[field] = uploaded.secure_url; });
+                    .then((uploaded: any) => { dto[field] = uploaded.secure_url; });
             }
             return Promise.resolve();
         });
@@ -87,6 +91,22 @@ export class UserService {
             status: UserStatus.PENDING,
             updatedAt: generateDate(),
         });
+
+        // Send real-time requested user level 2.
+        const payload = {
+            users: [
+                {
+                    id: user.id,
+                    avatar: user.avatar,
+                    nickname: user.nickname,
+                    email: user.email,
+                    status: user.status,
+                    createdAt: user.createdAt,
+                }
+            ]
+        }
+        this.adminGateway.sendRealTimeRequestedUserLevel2(payload);
+
         return result;
     }
 
@@ -95,7 +115,7 @@ export class UserService {
 
         // Upload avatar to cloudinary if the file is provided.
         if (avatar) {
-            const uploadImage = await this.cloudinaryService.uploadImage(avatar, 'avatars');
+            const uploadImage: any = await this.cloudinaryService.uploadImage(avatar, 'avatars');
             dto.avatar = uploadImage.secure_url;
         }
 

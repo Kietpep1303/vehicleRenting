@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 
 // Imports user entity.
 import { UserEntity } from 'src/user/entities/user.entity';
+import { UserStatus } from 'src/user/entities/user.entity';
 
 // Imports auth entity.
 import { AuthEntity } from '../entities/auth.entity';
@@ -45,7 +46,7 @@ export class AuthService {
 
         const accessToken = this.jwtService.sign(payload, {
             secret: this.configService.get('JWT_SECRET'),
-            expiresIn: '1h'
+            expiresIn: '10m'
         });
         const refreshToken = this.jwtService.sign(payload, {
             secret: this.configService.get('JWT_REFRESH_SECRET'),
@@ -62,6 +63,25 @@ export class AuthService {
         });
         return { accessToken, refreshToken, deviceId, deviceName };
     }
+
+    async findOrCreateUserGoogle( payload: any ) {
+        const { email, nickname } = payload;
+
+        let user = await this.userRepository.findOne({ where: { email: email } });
+        if (!user) {
+            user = await this.userRepository.create({
+                nickname: nickname,
+                email: email,
+                password: '',
+                accountLevel: 1,
+                createdAt: generateDate(),
+                updatedAt: generateDate(),
+                status: UserStatus.NO_LEVEL_2
+            });
+            await this.userRepository.save(user);
+        }
+        return user;
+    } 
 
     // Get the permanent access token.
     async getPermanentAccessToken(userId: number) {
@@ -132,7 +152,7 @@ export class AuthService {
     async signAccessToken(payload: any) {
         return this.jwtService.sign(payload, {
             secret: this.configService.get('JWT_SECRET'),
-            expiresIn: '1h'
+            expiresIn: '10m'
         });
     }
 

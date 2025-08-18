@@ -28,7 +28,7 @@ import { ErrorHandler } from '../../errorHandler/errorHandler';
 
 const N8N_LINK = 'http://10.0.1.2:5678/webhook/ai-chat';
 
-@UseGuards(AuthGuard('jwt'), AccountLevelGuard)
+@UseGuards(AuthGuard('jwt'), AccountLevelGuard) 
 @RequiredAccountLevel(1)
 @Controller('api/chat')
 export class GetMessageController {
@@ -194,7 +194,14 @@ export class GetMessageController {
                     content,
                 }),
             ).catch(err => {
-                console.error('[n8n webhook] call failed:', err?.message ?? err);
+                console.error('[n8n webhook] call failed:', {
+                    message: err?.message,
+                    status: err?.response?.status,
+                    statusText: err?.response?.statusText,
+                    data: err?.response?.data,
+                    url: N8N_LINK,
+                    payload: { sessionId, senderId, type, content }
+                });
             });
 
             return { status: HttpStatus.CREATED, message: 'Message sent successfully.' };
@@ -218,7 +225,22 @@ export class GetMessageController {
             // If does not AI, return error.
             if (senderId !== 0) throw new ErrorHandler(ErrorCodes.USER_NOT_FOUND, 'Can not send message to this chat session', HttpStatus.FORBIDDEN);
 
-            const messageContent = dto.type === 'vehicle' ? dto.vehicles : dto.content;
+            // Get the message content.
+            let messageContent;
+            switch (dto.type) {
+                case 'text':
+                    messageContent = dto.content;
+                    break;
+                case 'vehicle':
+                    messageContent = dto.vehicles;
+                    break;
+                case 'rental-confirmation':
+                    messageContent = dto.data;
+                    break;
+                case 'rental':
+                    messageContent = dto.data;
+                    break;
+            }
 
             // Send message to the chat session.
             await this.chatService.storeMessage(dto.sessionId, {

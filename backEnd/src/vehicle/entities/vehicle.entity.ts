@@ -8,7 +8,8 @@ export enum VehicleStatus {
     PENDING = 'PENDING',
     APPROVED = 'APPROVED',
     REJECTED = 'REJECTED',
-    HIDDEN = 'HIDDEN'
+    HIDDEN = 'HIDDEN',
+    SUSPENDED = 'SUSPENDED'
 }
 
 // Indexing for faster queries.

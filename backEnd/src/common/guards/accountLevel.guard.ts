@@ -21,11 +21,17 @@ export class AccountLevelGuard implements CanActivate {
             return true;
         }
 
-        const request = context.switchToHttp().getRequest();
-
-        // Get payload from request JWT.
-        const payload = request.user;
+        let payload: any;
         
+        // Get payload from request JWT.
+        if (context.getType() === 'http') {
+            payload = context.switchToHttp().getRequest().user;
+        } else if (context.getType() === 'ws') {
+            payload = context.switchToWs().getData().user;
+        } else {
+            throw new ErrorHandler(ErrorCodes.UNKNOWN_ERROR, 'Unknown error', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         // If user not found, throw error.
         if (!payload) throw new ErrorHandler(ErrorCodes.USER_NOT_FOUND, 'User not found', HttpStatus.NOT_FOUND);
 

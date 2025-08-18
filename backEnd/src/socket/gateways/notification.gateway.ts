@@ -33,7 +33,6 @@ export class NotificationGateway extends SocketGateway {
         super(jwtService);
     }
     
-
     // Handle client join room.
     @SubscribeMessage('joinRoom')
     async handleJoinRoom(
@@ -52,8 +51,8 @@ export class NotificationGateway extends SocketGateway {
         // Get pending notifications.
         const notifications = await this.notificationService.getPendingNotifications(userId);
         for (const notification of notifications) {
-            this.sendToUser(userId, notification.event.message, notification.event.data);
-            await this.notificationService.deleteNotification(notification.id);
+            // console.log(notification);
+            this.sendToUser(userId, 'rentalNotification', notification);
         }
     }
 

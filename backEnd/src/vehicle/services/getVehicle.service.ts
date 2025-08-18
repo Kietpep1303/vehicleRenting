@@ -372,6 +372,8 @@ export class GetVehicleService {
 
         // Get the cache key.
         const filter = { title, vehicleType, brand, model, year, color, city, district };
+
+        // Create the cache key for Redis based on the filter parameters.
         const keyParams = Object.entries(filter).filter(([_, value]) => value !== undefined).map(([key, value]) => `${key}_${value}`).join('_');
         const cacheKey = `vehicles_filters_${keyParams}`;
         const cachedData = await this.redisClient.get(cacheKey);

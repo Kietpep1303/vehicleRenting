@@ -112,7 +112,7 @@ export class ChatService {
         sessionId: number,
         message: {
             senderId: number,
-            type: 'text' | 'image' | 'vehicle',
+            type: 'text' | 'image' | 'vehicle' | 'rental-confirmation' | 'rental',
             content: any,
         },
         image?: Express.Multer.File[],
@@ -128,7 +128,7 @@ export class ChatService {
                 if (!['image/png', 'image/jpeg'].includes(file.mimetype)) {
                     throw new ErrorHandler(ErrorCodes.DTO_VALIDATION_ERROR, 'Invalid image type, only PNG or JPEG allowed', HttpStatus.BAD_REQUEST);
                 }
-
+                
                 // Validate file size (max 5MB).
                 const maxSize = 5 * 1024 * 1024;
                 if (file.size > maxSize) throw new ErrorHandler(ErrorCodes.DTO_VALIDATION_ERROR, 'Image must be smaller than 5 MB', HttpStatus.BAD_REQUEST);
@@ -280,6 +280,28 @@ export class ChatService {
                 })
             : [];
 
+        // Fetch all receivers.
+        const receiverRecords = await this.chatUserRepository
+                .createQueryBuilder('chatUser')
+                .leftJoinAndSelect('chatUser.user', 'user')
+                .where('chatUser.sessionId IN (:...sessionIds)', { sessionIds })
+                .andWhere('chatUser.userId != :userId', { userId })
+                .getMany();
+
+        const receiversMap: Record<
+                number,
+                { receiverId: number, receiverName: string, receiverAvatar: string }[]
+        > = {};
+
+        for (const record of receiverRecords) {
+            if (!receiversMap[record.sessionId]) receiversMap[record.sessionId] = [];
+            receiversMap[record.sessionId].push({
+                receiverId: record.userId,
+                receiverName: record.user.nickname,
+                receiverAvatar: record.user.avatar,
+            });
+        }
+
         // Map the last message onto each session
         const sessions = chats.map(chat => {
             const lastMessage = lastMessages.find(m => m.id === chat.lastMessageId);
@@ -291,7 +313,8 @@ export class ChatService {
                 senderName: lastMessage.sender.nickname,
                 senderAvatar: lastMessage.sender.avatar,
             } : null;
-            return { sessionId: chat.id, data };
+            const receivers = receiversMap[chat.id] ?? [];
+            return { sessionId: chat.id, data, receivers };
         });
 
         // Return with pagination metadata

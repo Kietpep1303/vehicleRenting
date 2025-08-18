@@ -1,4 +1,4 @@
-import { Controller, HttpCode, HttpStatus, Post, Body, UseGuards, Req, Headers, Delete, Get } from '@nestjs/common';
+import { Controller, HttpCode, HttpStatus, Post, Body, UseGuards, Req, Headers, Delete, Get, Res, Query } from '@nestjs/common';
 
 // Imports UAParser.
 import { UAParser } from 'ua-parser-js';
@@ -12,6 +12,9 @@ import { AuthService } from './services/auth.service';
 // Imports user service.
 import { UserService } from '../user/services/user.service';
 import { GetUserInfoService } from '../user/services/getUserInfo.service';
+
+// Imports user entity.
+import { UserStatus } from 'src/user/entities/user.entity';
 
 // Imports OTP service.
 import { OtpService } from '../otp/services/otp.service';
@@ -75,6 +78,9 @@ export class AuthController {
             // Check if the user is verified.
             if (user.accountLevel < 1) throw new ErrorHandler(ErrorCodes.USER_NOT_LEVEL_1, 'User is not verified', HttpStatus.BAD_REQUEST);
 
+            // Check if the user is suspended.
+            if (user.status === UserStatus.SUSPENDED) throw new ErrorHandler(ErrorCodes.USER_SUSPENDED, 'User is suspended', HttpStatus.BAD_REQUEST);
+
             // Check if the password is correct.
             const isPasswordCorrect = await bcrypt.compare(dto.password, user.password);
             if (!isPasswordCorrect) throw new ErrorHandler(ErrorCodes.PASSWORD_INCORRECT, 'Invalid password', HttpStatus.BAD_REQUEST);
@@ -88,12 +94,23 @@ export class AuthController {
             // Parse the User-Agent header.
             const parser = new UAParser(userAgent);
             const parsedUserAgent = parser.getResult();
+            const { browser, os, device } = parsedUserAgent;
 
-            // Format device info into a single string
-            const browserName = parsedUserAgent.browser.name || 'Unknown Browser';
-            const browserVersion = parsedUserAgent.browser.version || '';
-            const deviceVendor = parsedUserAgent.device.vendor || parsedUserAgent.os.name || 'Unknown Device';
-            const deviceInfo = `${browserName} ${browserVersion} ${deviceVendor}`.trim();
+            const browserName    = browser.name    || 'Unknown Browser';
+            const browserVersion = browser.version || '';
+
+            // UAParser often misses Android model/vendor – try regex fallback to grab the code in parentheses
+            let phoneModel = device.model;
+            if (!phoneModel && /Android/i.test(userAgent)) {
+                const match = userAgent.match(/\(.*Android.*;\s*([^;()]+)\s*(?:;|\))/i);
+                phoneModel = match?.[1]?.trim() || '';
+            }
+
+            const deviceNo = device.vendor || phoneModel || os.name || 'Unknown Device';
+            const deviceInfo = [ browserName, browserVersion, deviceNo ]
+            .filter(Boolean)
+            .join(' ')
+            .trim();
 
             // Login the user.
             const { accessToken, refreshToken, deviceId, deviceName } = 
@@ -125,13 +142,60 @@ export class AuthController {
     //     }
     // }
 
+    // Login with Google.
+    @Get('google')
+    async googleAuth(@Query('redirect_uri') redirectURI: string, @Res() res: any) {
+        // Encode the redirectURI in base64 to pass as state parameter
+        const state = redirectURI ? Buffer.from(redirectURI).toString('base64') : '';
+        
+        // Build the Google OAuth URL with state parameter
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        const callbackUrl = encodeURIComponent(process.env.GOOGLE_CALLBACK_URL || 'https://vehicle.kietpep1303.com/api/auth/google/redirect');
+        const scope = encodeURIComponent('email profile');
+        
+        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+            `client_id=${clientId}&` +
+            `redirect_uri=${callbackUrl}&` +
+            `scope=${scope}&` +
+            `response_type=code&` +
+            `state=${encodeURIComponent(state)}`;
+            
+        return res.redirect(googleAuthUrl);
+    }
+
+    // Google callback.
+    @Get('google/redirect')
+    @UseGuards(AuthGuard('google'))
+    async googleAuthRedirect(@Req() req: any, @Res() res: any) {
+        try {
+            const payload = req.user;
+            const user = await this.authService.findOrCreateUserGoogle(payload);
+            const { accessToken, refreshToken, deviceId, deviceName } = await this.authService.login(user.id, user.email, user.accountLevel, 'Google');
+            
+            // Get the state parameter and decode the redirectURI
+            const state = req.query.state;
+            const baseRedirectUrl = state ? Buffer.from(state, 'base64').toString() : 'myapp://auth';
+            
+            console.log('Redirecting to:', baseRedirectUrl);
+            const redirectUrl = `${baseRedirectUrl}?accessToken=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}`;
+            
+            return res.redirect(redirectUrl);
+        } catch (error) {
+            // Get the state parameter for error redirect too
+            const state = req.query.state;
+            const baseRedirectUrl = state ? Buffer.from(state, 'base64').toString() : 'myapp://auth';
+            const errorRedirectUrl = `${baseRedirectUrl}?error=${encodeURIComponent('Authentication failed')}`;
+            return res.redirect(errorRedirectUrl);
+        }
+    }
+
     // Get all valid refresh tokens of a user.
     @UseGuards(AuthGuard('jwt'))
     @Get('refresh-tokens')
     @HttpCode(HttpStatus.OK)
     async getRefreshTokens(@Req() req: any) {
         try {
-            const refreshTokens = await this.authService.getAllValidRefreshTokens(req.user.id);
+            const refreshTokens = await this.authService.getAllValidRefreshTokens(req.user.userId);
             return { status: HttpStatus.OK, message: 'Refresh tokens retrieved successfully.', refreshTokens };
         } catch (error) {
             if (error instanceof ErrorHandler) throw error;
@@ -150,12 +214,16 @@ export class AuthController {
             if (isValid === null) throw new ErrorHandler(ErrorCodes.FAILED_TO_VERIFY_REFRESH_TOKEN, 'Invalid or expired refresh token', HttpStatus.BAD_REQUEST);
             else if (isValid === false) throw new ErrorHandler(ErrorCodes.INCORRECT_REFRESH_TOKEN, 'Incorrect refresh token', HttpStatus.BAD_REQUEST);
 
+            // Get the user information.
+            const user = await this.getUserInfoService.findUserById(isValid.userId);
+            if (!user) throw new ErrorHandler(ErrorCodes.USER_NOT_FOUND, 'User not found', HttpStatus.NOT_FOUND);
+
             // Sign a new access token.
             const accessToken = await this.authService.signAccessToken(
                 {
                     userId: isValid.userId,
                     email: isValid.email,
-                    accountLevel: isValid.accountLevel
+                    accountLevel: user.accountLevel
                 }
             );
             // Return the new access token.

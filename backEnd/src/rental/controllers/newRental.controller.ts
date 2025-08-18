@@ -16,6 +16,9 @@ import { GetVehicleService } from '../../vehicle/services/getVehicle.service';
 import { CreateRentalConfirmationDto } from '../dto/create-rental-confirm.dto';
 import { CreateRentalRecordDto } from '../dto/create-rental-record.dto';
 
+// Imports vehicle entity.
+import { VehicleStatus } from '../../vehicle/entities/vehicle.entity';
+
 // Imports error codes.
 import { ErrorCodes } from '../../errorHandler/errorCodes';
 import { ErrorHandler } from '../../errorHandler/errorHandler';
@@ -37,6 +40,9 @@ export class NewRentalController {
             // Check if vehicle exsists.
             const vehicle = await this.getVehicleService.getVehicleByIdPrivate(dto.vehicleId);
             if (!vehicle) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_FOUND, 'Vehicle not found', HttpStatus.BAD_REQUEST);
+
+            // Check if the vehicle is approved.
+            if (vehicle.status !== VehicleStatus.APPROVED) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_APPROVED, 'Vehicle is not approved', HttpStatus.BAD_REQUEST);
 
             // Check if the endDayTime is greater than the startDateTime.
             if (dto.endDateTime <= dto.startDateTime) throw new ErrorHandler(ErrorCodes.INVALID_DATE_RANGE, 'End date is less than start date', HttpStatus.BAD_REQUEST);
@@ -63,8 +69,11 @@ export class NewRentalController {
             if (!vehicle) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_FOUND, 'Vehicle not found', HttpStatus.BAD_REQUEST);
             if (vehicle.userId === req.user.userId) throw new ErrorHandler(ErrorCodes.OWNER_CANT_RENT_THEIR_OWN_VEHICLE, 'Owner can not rent their own vehicle', HttpStatus.BAD_REQUEST);
 
-             // Check if the endDayTime is greater than the startDateTime.
-             if (dto.endDateTime <= dto.startDateTime) throw new ErrorHandler(ErrorCodes.INVALID_DATE_RANGE, 'End date is less than start date', HttpStatus.BAD_REQUEST);
+            // Check if the vehicle is approved.
+            if (vehicle.status !== VehicleStatus.APPROVED) throw new ErrorHandler(ErrorCodes.VEHICLE_NOT_APPROVED, 'Vehicle is not approved', HttpStatus.BAD_REQUEST);
+
+            // Check if the endDayTime is greater than the startDateTime.
+            if (dto.endDateTime <= dto.startDateTime) throw new ErrorHandler(ErrorCodes.INVALID_DATE_RANGE, 'End date is less than start date', HttpStatus.BAD_REQUEST);
              
             // Check if vehicle is available.
             const avaliability = await this.checkAvaliabilityVehicleService.checkAvaliabilityForNewRental(dto.vehicleId, dto.startDateTime, dto.endDateTime);

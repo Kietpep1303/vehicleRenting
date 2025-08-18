@@ -55,7 +55,7 @@ export class CreateUpdateDeleteVehicleService {
             if (fileArray && fileArray.length) {
                 return this.cloudinaryService
                     .uploadImage(fileArray[0], 'vehicle')
-                    .then(uploaded => { dto[field] = uploaded.secure_url; });
+                    .then((uploaded: any) => { dto[field] = uploaded.secure_url; });
             }
             return Promise.resolve();
         });
@@ -96,7 +96,7 @@ export class CreateUpdateDeleteVehicleService {
             if (fileArray && fileArray.length) {
                 return this.cloudinaryService
                     .uploadImage(fileArray[0], 'vehicle')
-                    .then(uploaded => { dto[field] = uploaded.secure_url; });
+                    .then((uploaded: any) => { dto[field] = uploaded.secure_url; });
             }
             return Promise.resolve();
         });

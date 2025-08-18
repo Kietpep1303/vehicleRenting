@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 // Imports user controller.
 import { UserController } from './user.controller';
@@ -15,12 +15,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
+// Imports admin gateway.
+import { AdminModule } from '../admin/admin.module';
+
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([UserEntity]),
         CloudinaryModule,
         OtpModule,
+        forwardRef(() => AdminModule),
     ],
     controllers: [UserController],
     providers: [UserService, GetUserInfoService],

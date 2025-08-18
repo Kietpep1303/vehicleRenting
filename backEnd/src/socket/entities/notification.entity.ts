@@ -21,6 +21,9 @@ export class NotificationEntity {
         data: any;
     };
 
+    @Column({ name: 'is_read', type: 'boolean', default: false })
+    isRead: boolean;
+
     @Column({ name: 'created_at', type: 'timestamp' })
     createdAt: Date;
 }

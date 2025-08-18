@@ -26,6 +26,16 @@ export class NotificationService {
 
     // Create the notification.
     async createNotification(userId: number, event: { message: string, data: any }) {
+
+        // Check if the user has more than 20 notifications.
+        const existingNotificationCount = await this.notificationRepository.count({ where: { userId } });
+        if (existingNotificationCount >= 20) {
+            const oldestNotification = await this.notificationRepository.findOne({ where: { userId }, order: { createdAt: 'ASC' }, select: ['id'] });
+            if (oldestNotification) {
+                await this.notificationRepository.delete(oldestNotification.id);
+            }
+        }
+
         const notification = this.notificationRepository.create({
             userId,
             event,
@@ -37,6 +47,19 @@ export class NotificationService {
     // Get pending notifications.
     async getPendingNotifications(userId: number) {
         return this.notificationRepository.find({ where: { userId } });
+    }
+
+    // Get the notification by id.
+    async getNotificationById(id: number) {
+        const result = await this.notificationRepository.findOne({ where: { id } });
+        if (!result) return null;
+        return result;
+    }
+
+    // Set the notification as read.
+    async setNotificationAsRead(id: number) {
+        const result = await this.notificationRepository.update(id, { isRead: true });
+        return this.getNotificationById(id);
     }
 
     // Delete the notification.
@@ -65,7 +88,6 @@ export class NotificationService {
         // Check if the user is online.
         if (this.notificationGateway.isUserOnline(ownerId)) {
             this.notificationGateway.sendToUser(ownerId, 'rentalNotification', notification);
-            await this.deleteNotification(notification.id);
         }
     }   
 
@@ -90,7 +112,6 @@ export class NotificationService {
         // Check if the user is online.
         if (this.notificationGateway.isUserOnline(ownerId)) {
             this.notificationGateway.sendToUser(ownerId, 'rentalNotification', notification);
-            await this.deleteNotification(notification.id);
         }
     }
 
@@ -115,7 +136,6 @@ export class NotificationService {
             // Check if the user is online.
             if (this.notificationGateway.isUserOnline(renterId)) {
                 this.notificationGateway.sendToUser(renterId, 'rentalNotification', notification);
-                await this.deleteNotification(notification.id);
             }
     }
 
@@ -138,7 +158,6 @@ export class NotificationService {
         // Check if the user is online.
         if (this.notificationGateway.isUserOnline(userId)) {
             this.notificationGateway.sendToUser(userId, 'messageNotification', notification);
-            await this.deleteNotification(notification.id);
         }
     }
 }

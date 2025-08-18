@@ -28,8 +28,8 @@ export class ChatMessageEntity {
     @JoinColumn({ name: 'sender_id' })
     sender: UserEntity;
 
-    @Column({ name: 'type', type: 'enum', enum: ['text', 'image', 'vehicle'] })
-    type: 'text' | 'image' | 'vehicle';
+    @Column({ name: 'type', type: 'enum', enum: ['text', 'image', 'vehicle', 'rental-confirmation', 'rental'] })
+    type: 'text' | 'image' | 'vehicle' | 'rental-confirmation' | 'rental';
 
     @Column({ type: 'jsonb' })
     content: any;
